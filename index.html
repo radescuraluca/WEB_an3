@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Meteo Simplu – vremea curentă, prognoza pe ore și pe zile și calitatea aerului, cu date de la Open-Meteo.">
+    <meta name="theme-color" content="#2563eb">
+    <title>Meteo Simplu</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#continut">Sari la conținut</a>
+
+    <!-- ===== Bara de sus ===== -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="#" class="logo" aria-label="Meteo Simplu – pagina principală">
+                <span class="logo-icon" aria-hidden="true">⛅</span>
+                <span>Meteo<strong>Simplu</strong></span>
+            </a>
+
+            <nav aria-label="Navigare principală">
+                <ul class="nav">
+                    <li><a href="#cautare">Prognoză</a></li>
+                    <li><a href="#detalii">Detalii</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+
+            <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Activează tema întunecată">🌙</button>
+        </div>
+    </header>
+
+    <main id="continut" class="page">
+
+        <!-- ===== Hero: căutare + vremea curentă ===== -->
+        <section id="cautare" class="hero" data-sky="clear-day" aria-labelledby="hero-title">
+            <h1 id="hero-title" class="visually-hidden">Caută prognoza meteo</h1>
+
+            <form id="search-form" class="search" novalidate>
+                <div class="search-bar">
+                    <label for="city" class="visually-hidden">Oraș</label>
+                    <span class="search-icon" aria-hidden="true">🔍</span>
+                    <input type="text" id="city" name="city" list="city-suggestions"
+                           placeholder="Caută un oraș, ex: Brașov"
+                           required minlength="2" maxlength="80" autocomplete="off"
+                           aria-describedby="city-error">
+                    <datalist id="city-suggestions"></datalist>
+                    <button type="button" id="geo-btn" class="geo-btn" title="Folosește locația mea" aria-label="Folosește locația mea">📍</button>
+                    <button type="submit" id="search-btn" class="search-btn">Caută</button>
+                </div>
+                <p class="field-error" id="city-error" aria-live="polite"></p>
+
+                <div class="options">
+                    <fieldset class="segmented">
+                        <legend class="visually-hidden">Număr de zile</legend>
+                        <input type="radio" id="days-3" name="days" value="3">
+                        <label for="days-3">3 zile</label>
+                        <input type="radio" id="days-7" name="days" value="7" checked>
+                        <label for="days-7">7 zile</label>
+                        <input type="radio" id="days-14" name="days" value="14">
+                        <label for="days-14">14 zile</label>
+                    </fieldset>
+
+                    <fieldset class="segmented">
+                        <legend class="visually-hidden">Unitate de măsură</legend>
+                        <input type="radio" id="unit-c" name="unit" value="celsius" checked>
+                        <label for="unit-c">°C</label>
+                        <input type="radio" id="unit-f" name="unit" value="fahrenheit">
+                        <label for="unit-f">°F</label>
+                    </fieldset>
+                </div>
+            </form>
+
+            <div class="favorites-row">
+                <span class="favorites-label">★ Favorite:</span>
+                <ul id="favorites" class="chips"></ul>
+                <span id="favorites-empty" class="favorites-empty">apasă ☆ lângă un oraș ca să-l salvezi</span>
+            </div>
+
+            <p id="status" class="status" role="status" aria-live="polite"></p>
+
+            <article id="current" class="current" hidden>
+                <div class="current-top">
+                    <div>
+                        <h2 id="location-name" class="location"></h2>
+                        <p id="location-time" class="location-time"></p>
+                    </div>
+                    <button type="button" id="fav-btn" class="fav-btn" aria-pressed="false" aria-label="Adaugă la favorite">☆</button>
+                </div>
+
+                <div class="current-main">
+                    <span id="current-icon" class="current-icon" aria-hidden="true"></span>
+                    <p class="current-temp"><span id="current-temp"></span></p>
+                    <div class="current-text">
+                        <p id="current-desc" class="current-desc"></p>
+                        <p id="current-range" class="current-range"></p>
+                        <p id="current-feels" class="current-range"></p>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <!-- ===== Panou cu detalii ===== -->
+        <div id="dashboard" class="dashboard" hidden>
+
+            <section class="card card-wide" aria-labelledby="hourly-title">
+                <h2 id="hourly-title" class="card-title">🕒 Următoarele 24 de ore</h2>
+                <ol id="hourly" class="hourly"></ol>
+                <figure class="chart">
+                    <canvas id="chart" role="img" aria-label="Grafic: temperatura și probabilitatea de precipitații pe următoarele 24 de ore"></canvas>
+                    <figcaption>
+                        <span class="legend legend-temp">Temperatură</span>
+                        <span class="legend legend-rain">Șanse de precipitații</span>
+                    </figcaption>
+                </figure>
+            </section>
+
+            <section class="card" aria-labelledby="daily-title">
+                <h2 id="daily-title" class="card-title">📅 Prognoza pe <span id="daily-count">7</span> zile</h2>
+                <ul id="daily" class="daily"></ul>
+            </section>
+
+            <div class="side">
+                <section id="detalii" class="card" aria-labelledby="details-title">
+                    <h2 id="details-title" class="card-title">📊 Detalii</h2>
+                    <dl id="details" class="details"></dl>
+                </section>
+
+                <section class="card" aria-labelledby="air-title">
+                    <h2 id="air-title" class="card-title">🍃 Calitatea aerului</h2>
+                    <div id="air" class="air"></div>
+                </section>
+            </div>
+        </div>
+
+        <!-- ===== Formular de contact ===== -->
+        <section id="contact" class="card contact" aria-labelledby="contact-title">
+            <div class="contact-intro">
+                <h2 id="contact-title" class="card-title">✉️ Trimite-ne o sugestie</h2>
+                <p class="muted">Ai găsit o problemă sau ai o idee? Completează formularul. Câmpurile marcate cu * sunt obligatorii.</p>
+            </div>
+
+            <form id="contact-form" class="contact-form" novalidate>
+                <div class="field">
+                    <label for="name">Nume *</label>
+                    <input type="text" id="name" name="name" required minlength="3" maxlength="60" autocomplete="name" placeholder="Ion Popescu">
+                    <p class="field-error" id="name-error" aria-live="polite"></p>
+                </div>
+
+                <div class="field">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required autocomplete="email" placeholder="nume@exemplu.ro">
+                    <p class="field-error" id="email-error" aria-live="polite"></p>
+                </div>
+
+                <div class="field">
+                    <label for="phone">Telefon <span class="muted">(opțional)</span></label>
+                    <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="0712 345 678">
+                    <p class="field-error" id="phone-error" aria-live="polite"></p>
+                </div>
+
+                <div class="field">
+                    <label for="subject">Subiect *</label>
+                    <select id="subject" name="subject" required>
+                        <option value="">Alege un subiect</option>
+                        <option value="sugestie">Sugestie</option>
+                        <option value="eroare">Raportează o eroare</option>
+                        <option value="altceva">Altceva</option>
+                    </select>
+                    <p class="field-error" id="subject-error" aria-live="polite"></p>
+                </div>
+
+                <div class="field field-full">
+                    <label for="message">Mesaj * <span class="counter" id="message-counter">0 / 500</span></label>
+                    <textarea id="message" name="message" rows="5" required minlength="20" maxlength="500" placeholder="Scrie cel puțin 20 de caractere..."></textarea>
+                    <p class="field-error" id="message-error" aria-live="polite"></p>
+                </div>
+
+                <div class="field field-full">
+                    <label class="checkbox">
+                        <input type="checkbox" id="consent" name="consent" required>
+                        <span>Sunt de acord ca datele mele să fie folosite pentru a primi un răspuns. *</span>
+                    </label>
+                    <p class="field-error" id="consent-error" aria-live="polite"></p>
+                </div>
+
+                <div class="field-full">
+                    <button type="submit" class="btn-primary">Trimite mesajul</button>
+                </div>
+            </form>
+
+            <p id="contact-success" class="success" role="status" hidden></p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Date meteo: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · &copy; 2026 Meteo Simplu</p>
+    </footer>
+</body>
+</html>
